@@ -1,6 +1,4 @@
 #include "System.hpp"
 
-System::System()
-{
+using ecs::System;
 
-}

@@ -1,5 +1,7 @@
 #pragma once
 
+namespace ecs {
+
 class EntityComponentSystem;
 
 class Entity final {
@@ -18,3 +20,5 @@ class Entity final {
         EntityComponentSystem& ecs;
 
 };
+
+}

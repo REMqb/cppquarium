@@ -1,7 +1,20 @@
 #pragma once
 
-class System
+#include "BaseSystem.hpp"
+#include "EntityComponentSystem.hpp"
+
+namespace ecs {
+
+//class EntityComponentSystem;
+
+template <typename BaseComponentType>
+class System : public BaseSystem
 {
     public:
-        System();
+        System(EntityComponentSystem& ecs) : BaseSystem(ecs){
+            ecs.registerComponentProvider(*this);
+        }
 };
+
+}
+
