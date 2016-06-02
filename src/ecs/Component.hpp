@@ -2,13 +2,18 @@
 
 namespace ecs {
 
+class Entity;
+
 /**
  * @brief The BaseComponent struct
  * Base struct (class) for components, should only contain data, no methods.
  */
-struct BaseComponent{
+struct Component{
     public:
-        BaseComponent();
+        const Entity& entity;
+
+    protected:
+        Component(const Entity& entity);
 };
 
 }

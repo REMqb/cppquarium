@@ -1,12 +1,12 @@
 #include "EntityComponentSystem.hpp"
 
 #include "Entity.hpp"
-#include "BaseSystem.hpp"
+#include "SystemBase.hpp"
 
 using std::make_unique;
 using ecs::EntityComponentSystem;
 using ecs::Entity;
-using ecs::BaseSystem;
+using ecs::SystemBase;
 
 EntityComponentSystem::EntityComponentSystem(){
 }

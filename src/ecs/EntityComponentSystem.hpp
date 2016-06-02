@@ -10,14 +10,15 @@
 
 namespace ecs {
 
-class BaseSystem;
-template<typename ComponentType> class System;
+class SystemBase;
+template<typename, typename> class System;
+class Component;
 class Entity;
 
 /**
  * @brief The EntityComponentSystem class manage own entities and systems.
  */
-class EntityComponentSystem {
+class EntityComponentSystem final {
     public:
         EntityComponentSystem();
 
@@ -38,7 +39,9 @@ class EntityComponentSystem {
          */
         template<typename SystemType> SystemType* getSystem() const;
 
-        template<typename ComponentType> void registerComponentProvider(System<ComponentType>& system);
+        //template<typename ComponentType> void registerComponentProvider(System<ComponentType>& system);
+
+        //template<typename ComponentType, typename AliasComponentType, typename SystemType> void registerComponentProviderAlias(SystemType& system);
 
         ~EntityComponentSystem(); // we must define the destructor, otherwise the compiler can't create the default deleter for unique_ptr because System and Entity are forward declared (incomplete)
 
@@ -47,20 +50,20 @@ class EntityComponentSystem {
         /**
          * @brief internal member that register AliasType as an alias for the given system.
          */
-        template <typename AliasType> void registerSystemAlias(BaseSystem& system);
+        template<typename AliasType> void registerSystemAlias(SystemBase& system);
 
         /// map typeid to a system of the systems vector.
-        std::unordered_map<std::type_index, std::reference_wrapper<BaseSystem>> typeToSystemMap;
+        std::unordered_map<std::type_index, std::reference_wrapper<SystemBase>> typeToSystemMap;
         /// map component typeid to a system that can create them.
-        std::unordered_map<std::type_index, std::reference_wrapper<BaseSystem>> componentProvider;
+        //std::unordered_map<std::type_index, std::reference_wrapper<SystemBase>> componentProvider; // is it that usefull ?
         /// vector holding systems
-        std::vector<std::unique_ptr<BaseSystem>> systems;
+        std::vector<std::unique_ptr<SystemBase>> systems;
         /// vector holding entities, may be changed to another container type later.
         std::vector<std::unique_ptr<Entity>> entities;
 };
 
-template <typename SystemType, typename... Args> SystemType& EntityComponentSystem::registerSystem(Args... args){
-    static_assert(std::is_base_of<BaseSystem, SystemType>::value, "SystemType must be derived from class System");
+template<typename SystemType, typename... Args> SystemType& EntityComponentSystem::registerSystem(Args... args){
+    static_assert(std::is_base_of<SystemBase, SystemType>::value, "SystemType must be derived from class System");
 
     SystemType* systemPtr;
 
@@ -75,8 +78,8 @@ template <typename SystemType, typename... Args> SystemType& EntityComponentSyst
     return *systemPtr;
 }
 
-template <typename SystemType, typename AliasType> void EntityComponentSystem::registerSystemAlias(){
-    static_assert(std::is_base_of<BaseSystem, SystemType>::value, "SystemType must be derived from class System");
+template<typename SystemType, typename AliasType> void EntityComponentSystem::registerSystemAlias(){
+    static_assert(std::is_base_of<SystemBase, SystemType>::value, "SystemType must be derived from class System");
     SystemType* system = getSystem<SystemType>();
 
     if(system){
@@ -95,7 +98,7 @@ template <typename SystemType, typename AliasType> void EntityComponentSystem::r
 }
 
 template<typename SystemType> SystemType* EntityComponentSystem::getSystem() const{
-    static_assert(std::is_base_of<BaseSystem, SystemType>::value, "SystemType must be derived from class System");
+    static_assert(std::is_base_of<SystemBase, SystemType>::value, "SystemType must be derived from class System");
     auto result = typeToSystemMap.find(typeid(SystemType));
 
     if(result == typeToSystemMap.end()){
@@ -106,14 +109,14 @@ template<typename SystemType> SystemType* EntityComponentSystem::getSystem() con
 
 }
 
-template <typename AliasType> inline void EntityComponentSystem::registerSystemAlias(BaseSystem& system){
+template <typename AliasType> inline void EntityComponentSystem::registerSystemAlias(SystemBase& system){
     typeToSystemMap.emplace(typeid(AliasType), system);
 }
 
-template<typename ComponentType> void EntityComponentSystem::registerComponentProvider(System<ComponentType>& system){
-    //static_assert(std::is_base_of<, SystemType>::value, "SystemType must be derived from class System");
+/*template<typename ComponentType> void EntityComponentSystem::registerComponentProvider(System<ComponentType>& system){
+    static_assert(std::is_base_of<BaseComponent, ComponentType>::value, "BaseComponent must be derived from class BaseComponent");
 
     componentProvider.emplace(typeid(ComponentType), system);
-}
+}*/
 
 }
