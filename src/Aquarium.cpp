@@ -36,7 +36,7 @@ GenderComponent& GenderComponent::setGender(Gender gender){
     return *this;
 }
 
-class GenderSystem : public System<GenderComponent>{
+class GenderSystem : public System<GenderSystem>{
     public:
 
         GenderSystem(EntityComponentSystem& ecs) : System(ecs){
@@ -44,7 +44,7 @@ class GenderSystem : public System<GenderComponent>{
         }
 };
 
-class FishSystem : public System<FishComponent>{
+class FishSystem : public System<FishSystem>{
     public:
 
         FishSystem(EntityComponentSystem& ecs):System(ecs){

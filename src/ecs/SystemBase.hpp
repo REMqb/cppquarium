@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <functional>
 
+#include "CovariantComponentMap.hpp"
+
 namespace ecs {
     class Entity;
 }
@@ -22,15 +24,11 @@ bool operator==(const std::reference_wrapper<const ecs::Entity>& ref1, const std
 
 class EntityComponentSystem;
 class Component;
-template<typename, typename> class System;
+template<typename> class System;
 
 class SystemBase{
-        template<typename, typename> friend class System;
+        template<typename> friend class System; // Only system can inherit SystemBase
     public:
-        /// Type of the stored components, declared here to have valid template in System
-        using ComponentType = Component;
-        /// Type of the system used as a base, declared here to have valid template in System
-        using SystemBaseType = SystemBase;
 
         SystemBase() = delete;
         SystemBase(const SystemBase&) = delete;
@@ -39,21 +37,15 @@ class SystemBase{
         SystemBase& operator=(const SystemBase&) = delete;
         SystemBase& operator=(SystemBase&&) = default;
 
-        Component& attachComponentTo(const Entity& entity);
-        Component* getAttachedComponentFor(const Entity& entity) const;
-
-        size_t componentCount() const;
-
         virtual ~SystemBase() = 0;
 
     protected:
+
+
         EntityComponentSystem& ecs;
-        std::unordered_map<std::reference_wrapper<const Entity>, std::unique_ptr<ComponentType>> componentsMap;
 
     private:
         SystemBase(EntityComponentSystem& ecs);
-
-        virtual Component& doAttachComponentTo(const Entity& entity) = 0;
 
 };
 

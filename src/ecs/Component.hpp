@@ -6,7 +6,8 @@ class Entity;
 
 /**
  * @brief The BaseComponent struct
- * Base struct (class) for components, should only contain data, no methods.
+ * Base struct (class) for components.
+ * Components should only contain data, no methods.
  */
 struct Component{
     public:

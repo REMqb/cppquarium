@@ -7,11 +7,12 @@
 #include <vector>
 //#include <type_traits>
 #include <cassert>
+#include <boost/any.hpp>
 
 namespace ecs {
 
 class SystemBase;
-template<typename, typename> class System;
+template<typename> class System;
 class Component;
 class Entity;
 
@@ -27,7 +28,7 @@ class EntityComponentSystem final {
         /**
          * @brief Register a system and return its instance, if it's already registered (either as an instance of it or an alias) return the existing instance without creating a new one.
          */
-        template<typename SystemType, typename... Args> SystemType& registerSystem(Args... args);
+        template<typename SystemType, typename... Args> SystemType& registerSystem(Args&&... args);
         /**
          * @brief Register the type AliasType as an Alias for the system of type SystemType.
          * Validity of the cast is checked via RTTI (dynamic_cast), if it's not valid (or SystemType isn't already registered) the program will crash (assert fail).
@@ -43,6 +44,8 @@ class EntityComponentSystem final {
 
         //template<typename ComponentType, typename AliasComponentType, typename SystemType> void registerComponentProviderAlias(SystemType& system);
 
+
+
         ~EntityComponentSystem(); // we must define the destructor, otherwise the compiler can't create the default deleter for unique_ptr because System and Entity are forward declared (incomplete)
 
     private:
@@ -54,21 +57,19 @@ class EntityComponentSystem final {
 
         /// map typeid to a system of the systems vector.
         std::unordered_map<std::type_index, std::reference_wrapper<SystemBase>> typeToSystemMap;
-        /// map component typeid to a system that can create them.
-        //std::unordered_map<std::type_index, std::reference_wrapper<SystemBase>> componentProvider; // is it that usefull ?
         /// vector holding systems
         std::vector<std::unique_ptr<SystemBase>> systems;
         /// vector holding entities, may be changed to another container type later.
         std::vector<std::unique_ptr<Entity>> entities;
 };
 
-template<typename SystemType, typename... Args> SystemType& EntityComponentSystem::registerSystem(Args... args){
+template<typename SystemType, typename... Args> SystemType& EntityComponentSystem::registerSystem(Args&&... args){
     static_assert(std::is_base_of<SystemBase, SystemType>::value, "SystemType must be derived from class System");
 
     SystemType* systemPtr;
 
     if(!(systemPtr = getSystem<SystemType>())){
-        systems.emplace_back(std::make_unique<SystemType>(*this, args...));
+        systems.emplace_back(std::make_unique<SystemType>(*this, std::forward<Args...>(args...)));
 
         systemPtr = static_cast<SystemType*>(systems.back().get()); // static_cast is fine since it's the system we just created though not thread safe
 

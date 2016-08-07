@@ -24,24 +24,6 @@ SystemBase::SystemBase(EntityComponentSystem& ecs) : ecs(ecs) {
 
 }
 
-Component& SystemBase::attachComponentTo(const Entity& entity){
-    return doAttachComponentTo(entity);
-}
-
-Component* SystemBase::getAttachedComponentFor(const Entity& entity) const{
-    auto it = componentsMap.find(entity);
-
-    if(it != componentsMap.end()){
-        return it->second.get();
-    }else{
-        return nullptr;
-    }
-}
-
-size_t SystemBase::componentCount() const{
-    return componentsMap.size();
-}
-
 SystemBase::~SystemBase(){
 
 }
