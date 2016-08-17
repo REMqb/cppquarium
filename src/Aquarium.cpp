@@ -4,12 +4,15 @@
 
 #include "ecs/System.hpp"
 #include "ecs/Component.hpp"
+#include "ecs/Entity.hpp"
+#include "TickSystem.hpp"
 
 using namespace std;
 using namespace ecs;
 
 struct FishComponent : public Component{
-    FishComponent(const Entity& entity): Component(entity){}
+    template<typename NameT>
+    FishComponent(const Entity& entity, NameT&& name): Component(entity), name(std::forward<NameT>(name)){}
 
     string name;
 
@@ -24,6 +27,14 @@ struct FishComponent : public Component{
 
 struct SeaweedComponent: public Component{
     SeaweedComponent(const Entity& entity): Component(entity){}
+
+    SeaweedComponent(const SeaweedComponent&) = delete;
+    SeaweedComponent(SeaweedComponent&&) = default;
+
+    SeaweedComponent& operator=(const SeaweedComponent&) = delete;
+    SeaweedComponent& operator=(SeaweedComponent&&) = default;
+
+    ~SeaweedComponent(){cout << __PRETTY_FUNCTION__ << endl;}
 };
 
 GenderComponent::GenderComponent(const Entity& entity): Component(entity){
@@ -40,7 +51,11 @@ class GenderSystem : public System<GenderSystem>{
     public:
 
         GenderSystem(EntityComponentSystem& ecs) : System(ecs){
+            ecs.getSystem<TickSystem>()->addListener<TickSystem::TickEvent>(std::bind(&GenderSystem::onTick, this, std::placeholders::_1));
+        }
 
+        void onTick(TickSystem::TickEvent& event){
+            cout << "tick" << endl;
         }
 };
 
@@ -54,7 +69,7 @@ class FishSystem : public System<FishSystem>{
             GenderSystem* genderSystem = ecs.getSystem<GenderSystem>();
 
             size_t n = 1;
-            for(const auto& fish : componentsMap){
+            /*for(const auto& fish : componentsMap){
                 const FishComponent& fishComponent = static_cast<const FishComponent&>(*fish.second);
                 GenderComponent* genderComponent{nullptr};
                 if(genderSystem) {
@@ -77,24 +92,29 @@ class FishSystem : public System<FishSystem>{
                 cout << "Poisson #" << n << " : nom = " << fishComponent.name << ", genre = " << genre << endl;
 
                 n++;
-            }
+            }*/
         }
 };
 
-class SeaweedSystem : public System<SeaweedComponent>{
+class SeaweedSystem : public System<SeaweedSystem>{
     public:
         SeaweedSystem(EntityComponentSystem& ecs):System(ecs){
 
         }
+
 
 };
 
 Aquarium::Aquarium() {
     cout << "Initializing the aquarium... " << flush;
 
+    tickSystem = &ecs.registerSystem<TickSystem>();
+
     fishSystem = &ecs.registerSystem<FishSystem>();
     genderSystem = &ecs.registerSystem<GenderSystem>();
     seaweedSystem = &ecs.registerSystem<SeaweedSystem>();
+
+
 
     cout << "[Done]" << endl;
 }
@@ -114,14 +134,8 @@ void Aquarium::populate(){
 Entity& Aquarium::createFish(const std::string& name, GenderComponent::Gender gender){
     Entity& entity = ecs.createEntity();
 
-    fishSystem->attachComponentTo(entity).setName(name);
-    genderSystem->attachComponentTo(entity).setGender(gender);
-
-    /*FishComponent& fishComponent = fishSystem->attachComponentTo(entity);
-    GenderComponent& genderComponent = genderSystem->attachComponentTo(entity);
-
-    fishComponent.name = name;
-    genderComponent.gender = gender;*/
+    entity.attachComponent<FishComponent>(name);
+    entity.attachComponent<GenderComponent>().setGender(gender);
 
     return entity;
 }
@@ -129,7 +143,7 @@ Entity& Aquarium::createFish(const std::string& name, GenderComponent::Gender ge
 Entity& Aquarium::createSeaweed(){
     Entity& entity = ecs.createEntity();
 
-    seaweedSystem->attachComponentTo(entity);
+    entity.attachComponent<SeaweedComponent>();
 
     return entity;
 }
@@ -142,7 +156,9 @@ void Aquarium::run(){
     for(i = 0; i < 10; i++){
         cout << "> Step #" << (i + 1) << endl;
 
-        cout << "Il y a " << seaweedSystem->componentCount() << " algue(s) et " << fishSystem->componentCount() << " poisson(s)." << endl;
+        tickSystem->tick();
+
+        //cout << "Il y a " << seaweedSystem->componentCount() << " algue(s) et " << fishSystem->componentCount() << " poisson(s)." << endl;
 
         fishSystem->printFishes();
         //i++;

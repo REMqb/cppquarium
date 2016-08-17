@@ -10,7 +10,7 @@ using ecs::Entity;
 
 using std::reference_wrapper;
 
-using hash = std::hash<std::reference_wrapper<const Entity>>;
+using hash = std::hash<reference_wrapper<const Entity>>;
 
 hash::result_type hash::operator()(argument_type const& s) const{
     return std::hash<const Entity*>()(&s.get());

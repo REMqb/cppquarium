@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <functional>
 
-#include "CovariantComponentMap.hpp"
+#include "EntityComponentSystem.hpp"
 
 namespace ecs {
     class Entity;
@@ -22,14 +22,12 @@ namespace ecs{
 
 bool operator==(const std::reference_wrapper<const ecs::Entity>& ref1, const std::reference_wrapper<const ecs::Entity>& ref2);
 
-class EntityComponentSystem;
 class Component;
 template<typename> class System;
 
 class SystemBase{
         template<typename> friend class System; // Only system can inherit SystemBase
     public:
-
         SystemBase() = delete;
         SystemBase(const SystemBase&) = delete;
         SystemBase(SystemBase&&) = default;
@@ -40,7 +38,6 @@ class SystemBase{
         virtual ~SystemBase() = 0;
 
     protected:
-
 
         EntityComponentSystem& ecs;
 

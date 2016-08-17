@@ -9,10 +9,20 @@
 #include <cassert>
 #include <boost/any.hpp>
 
+#include <utility>
+
+
+#include "EventListenerManagerBase.hpp"
+#include "EventListenerManager.hpp"
+
+#include "ComponentManagerBase.hpp"
+#include "ComponentManager.hpp"
+
 namespace ecs {
 
 class SystemBase;
 template<typename> class System;
+template<typename> class Event;
 class Component;
 class Entity;
 
@@ -40,11 +50,14 @@ class EntityComponentSystem final {
          */
         template<typename SystemType> SystemType* getSystem() const;
 
-        //template<typename ComponentType> void registerComponentProvider(System<ComponentType>& system);
+        template<typename EventT>
+        void addListener(typename EventT::SourceT* source, std::function<void(EventT&)> listener);
 
-        //template<typename ComponentType, typename AliasComponentType, typename SystemType> void registerComponentProviderAlias(SystemType& system);
+        template<typename EventT>
+        void fireEvent(EventT& event);
 
-
+        template<typename ComponentT, typename... Args>
+        ComponentT& attachComponentTo(Entity& entity, Args&&... args);
 
         ~EntityComponentSystem(); // we must define the destructor, otherwise the compiler can't create the default deleter for unique_ptr because System and Entity are forward declared (incomplete)
 
@@ -57,19 +70,24 @@ class EntityComponentSystem final {
 
         /// map typeid to a system of the systems vector.
         std::unordered_map<std::type_index, std::reference_wrapper<SystemBase>> typeToSystemMap;
+        /// map event typeid to the corresponding listener manager.
+        std::unordered_map<std::type_index, std::unique_ptr<EventListenerManagerBase>> eventListenerManagersMap;
+        ///
+        std::unordered_map<std::type_index, std::unique_ptr<ComponentManagerBase>> componentManagersMap;
         /// vector holding systems
         std::vector<std::unique_ptr<SystemBase>> systems;
         /// vector holding entities, may be changed to another container type later.
         std::vector<std::unique_ptr<Entity>> entities;
 };
 
-template<typename SystemType, typename... Args> SystemType& EntityComponentSystem::registerSystem(Args&&... args){
+template<typename SystemType, typename... Args>
+SystemType& EntityComponentSystem::registerSystem(Args&&... args){
     static_assert(std::is_base_of<SystemBase, SystemType>::value, "SystemType must be derived from class System");
 
     SystemType* systemPtr;
 
     if(!(systemPtr = getSystem<SystemType>())){
-        systems.emplace_back(std::make_unique<SystemType>(*this, std::forward<Args...>(args...)));
+        systems.emplace_back(std::make_unique<SystemType>(*this, std::forward<Args>(args)...));
 
         systemPtr = static_cast<SystemType*>(systems.back().get()); // static_cast is fine since it's the system we just created though not thread safe
 
@@ -79,7 +97,8 @@ template<typename SystemType, typename... Args> SystemType& EntityComponentSyste
     return *systemPtr;
 }
 
-template<typename SystemType, typename AliasType> void EntityComponentSystem::registerSystemAlias(){
+template<typename SystemType, typename AliasType>
+void EntityComponentSystem::registerSystemAlias(){
     static_assert(std::is_base_of<SystemBase, SystemType>::value, "SystemType must be derived from class System");
     SystemType* system = getSystem<SystemType>();
 
@@ -98,7 +117,8 @@ template<typename SystemType, typename AliasType> void EntityComponentSystem::re
     }
 }
 
-template<typename SystemType> SystemType* EntityComponentSystem::getSystem() const{
+template<typename SystemType>
+SystemType* EntityComponentSystem::getSystem() const{
     static_assert(std::is_base_of<SystemBase, SystemType>::value, "SystemType must be derived from class System");
     auto result = typeToSystemMap.find(typeid(SystemType));
 
@@ -110,14 +130,80 @@ template<typename SystemType> SystemType* EntityComponentSystem::getSystem() con
 
 }
 
-template <typename AliasType> inline void EntityComponentSystem::registerSystemAlias(SystemBase& system){
+template <typename AliasType>
+inline void EntityComponentSystem::registerSystemAlias(SystemBase& system){
     typeToSystemMap.emplace(typeid(AliasType), system);
 }
 
-/*template<typename ComponentType> void EntityComponentSystem::registerComponentProvider(System<ComponentType>& system){
-    static_assert(std::is_base_of<BaseComponent, ComponentType>::value, "BaseComponent must be derived from class BaseComponent");
+template<typename EventT>
+void EntityComponentSystem::addListener(typename EventT::SourceT* source, std::function<void(EventT&)> listener){
+    static_assert(std::is_base_of<Event<typename EventT::SourceT>, EventT>::value, "Event type must derive from Event"); // is it that nececary ?
 
-    componentProvider.emplace(typeid(ComponentType), system);
-}*/
+    auto result = eventListenerManagersMap.find(typeid(EventT));
+
+    EventListenerManager<EventT, typename EventT::SourceT>* manager = nullptr;
+
+    if(result == eventListenerManagersMap.end()){
+        auto ptr = std::make_unique<EventListenerManager<EventT, typename EventT::SourceT>>();
+
+        manager = ptr.get();
+
+        eventListenerManagersMap.emplace(typeid(EventT), std::move(ptr));
+    }else{
+        manager = static_cast<decltype(manager)>(result->second.get());
+    }
+
+    manager->addListener(source, listener);
+}
+
+template<typename EventT>
+void EntityComponentSystem::fireEvent(EventT& event){
+    auto result = eventListenerManagersMap.find(typeid(EventT));
+
+    EventListenerManager<EventT, typename EventT::SourceT>* manager = nullptr;
+
+    if(result != eventListenerManagersMap.end()){
+        manager = static_cast<decltype(manager)>(result->second.get());
+
+        manager->dispatchEvent(event);
+    }
+}
+
+template<typename ComponentT, typename... Args>
+ComponentT& EntityComponentSystem::attachComponentTo(Entity& entity, Args&&... args){
+    /*auto result = componentManagersMap.find(typeid(ComponentT));
+
+    ComponentManager<ComponentT>* manager = nullptr;
+
+    if(result == componentManagersMap.end()){
+        auto ptr = std::make_unique<ComponentManager<ComponentT>>();
+
+        manager = ptr.get();
+
+        componentManagersMap.emplace(typeid(ComponentT), std::move(ptr));
+    }else{
+        manager = static_cast<decltype(manager)>(result->second.get());
+    }*/
+
+    return ComponentManager<ComponentT>::getComponentManagerFor(*this).attachComponentTo(entity, std::forward<Args>(args)...);
+}
+
+template <typename T>
+bool operator==(const std::reference_wrapper<T>& ref1, const std::reference_wrapper<T>& ref2);
+
+template <typename T>
+bool operator==(const std::reference_wrapper<T>& ref1, const std::reference_wrapper<T>& ref2){
+    return &ref1.get() == &ref2.get();
+}
+
 
 }
+
+namespace std {
+template<>
+class hash<std::reference_wrapper<ecs::EntityComponentSystem>> {
+public:
+    size_t operator()(const std::reference_wrapper<ecs::EntityComponentSystem> &s) const noexcept;
+};
+}
+

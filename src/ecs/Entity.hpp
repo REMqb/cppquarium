@@ -1,8 +1,8 @@
 #pragma once
 
-namespace ecs {
+#include "EntityComponentSystem.hpp"
 
-class EntityComponentSystem;
+namespace ecs {
 
 class Entity final {
     public:
@@ -16,9 +16,15 @@ class Entity final {
 
         ~Entity();
 
+        template<typename ComponentT, typename... Args> ComponentT& attachComponent(Args&&... args);
+
     private:
         EntityComponentSystem& ecs;
 
 };
+
+template<typename ComponentT, typename... Args> ComponentT& Entity::attachComponent(Args&&... args){
+    return ecs.attachComponentTo<ComponentT>(*this, std::forward<Args>(args)...);
+}
 
 }

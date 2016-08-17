@@ -19,3 +19,17 @@ Entity& EntityComponentSystem::createEntity(){
 
 EntityComponentSystem::~EntityComponentSystem(){
 }
+
+/*using hash = std::hash<std::reference_wrapper<const EntityComponentSystem>>;
+
+template<>
+hash::result_type hash::operator()(const std::reference_wrapper<const EntityComponentSystem>& s) const noexcept{
+    return std::hash<const EntityComponentSystem*>()(&s.get());
+}*/
+
+namespace std {
+//template<>
+    size_t hash<std::reference_wrapper<EntityComponentSystem>>::operator()(const std::reference_wrapper<EntityComponentSystem> &s) const noexcept{
+        return std::hash<EntityComponentSystem*>()(&s.get());
+    }
+}

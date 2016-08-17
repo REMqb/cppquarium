@@ -6,6 +6,7 @@
 class FishSystem;
 class GenderSystem;
 class SeaweedSystem;
+class TickSystem;
 
 struct GenderComponent : public ecs::Component{
     GenderComponent(const ecs::Entity& entity);
@@ -36,6 +37,8 @@ class Aquarium final{
         FishSystem* fishSystem;
         GenderSystem* genderSystem;
         SeaweedSystem* seaweedSystem;
+
+        TickSystem* tickSystem;
 
         ecs::EntityComponentSystem ecs;
 };

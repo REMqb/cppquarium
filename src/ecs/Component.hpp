@@ -15,6 +15,12 @@ struct Component{
 
     protected:
         Component(const Entity& entity);
+
+        Component(const Component&) = delete;
+        Component(Component&&) = default;
+
+        Component& operator=(const Component&) = delete;
+        Component& operator=(Component&&) = default;
 };
 
 }
