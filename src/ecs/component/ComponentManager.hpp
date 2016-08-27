@@ -5,7 +5,7 @@
 #include <vector>
 #include <iostream>
 
-#include "StaticMapHandler.hpp"
+#include "../StaticMapHandler.hpp"
 
 #include "ComponentManagerBase.hpp"
 
@@ -23,13 +23,20 @@ namespace ecs {
             /////// STATICS ///////
 
             static ComponentManager<ComponentT>& getComponentManagerFor(EntityComponentSystem& ecs);
+            static void removeComponentManagerFor(EntityComponentSystem& ecs);
         private:
+            ComponentManager(EntityComponentSystem& ecs);
+
             std::unordered_map<std::reference_wrapper<const Entity>, ComponentT> components;
 
             /////// STATICS ///////
 
             static std::unordered_map<std::reference_wrapper<EntityComponentSystem>, ComponentManager<ComponentT>>& componentManagers;
     };
+
+    template<typename ComponentT>
+    ComponentManager<ComponentT>::ComponentManager(EntityComponentSystem& ecs) : ComponentManagerBase(ecs){
+    }
 
     template<typename ComponentT>
     template<typename... Args>
@@ -39,12 +46,20 @@ namespace ecs {
         return result.first->second;
     }
 
+    /////// STATICS ///////
+
     template<typename ComponentT>
     ComponentManager<ComponentT>& ComponentManager<ComponentT>::getComponentManagerFor(EntityComponentSystem& ecs){
-        return componentManagers[ecs];
+        auto result = componentManagers.find(ecs);
+
+        if(result == componentManagers.end()){
+            return componentManagers.emplace(ecs, ComponentManager<ComponentT>{ecs}).first->second;
+        }else{
+            return result->second;
+        }
     }
 
     template<typename ComponentT>
-    std::unordered_map<std::reference_wrapper<EntityComponentSystem>, ComponentManager<ComponentT>>& ComponentManager<ComponentT>::componentManagers = StaticMapHandler<std::reference_wrapper<EntityComponentSystem>, ComponentManager<ComponentT>>::getMap();
+    std::unordered_map<std::reference_wrapper<EntityComponentSystem>, ComponentManager<ComponentT>>& ComponentManager<ComponentT>::componentManagers = StaticMapHandler<std::reference_wrapper<EntityComponentSystem>, ComponentManager<ComponentT>, ComponentManager<ComponentT>>::map;
 
 }

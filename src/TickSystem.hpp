@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ecs/System.hpp"
-#include "ecs/Event.hpp"
+#include "ecs/system/System.hpp"
+#include "ecs/event/Event.hpp"
 
 class TickSystem : public ecs::System<TickSystem> {
     public:

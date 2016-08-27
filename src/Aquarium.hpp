@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ecs/EntityComponentSystem.hpp"
-#include "ecs/Component.hpp"
+#include "ecs/component/Component.hpp"
 
 class FishSystem;
 class GenderSystem;

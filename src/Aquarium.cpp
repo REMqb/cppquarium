@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "ecs/System.hpp"
-#include "ecs/Component.hpp"
+#include "ecs/system/System.hpp"
+#include "ecs/component/Component.hpp"
 #include "ecs/Entity.hpp"
 #include "TickSystem.hpp"
 
@@ -55,6 +55,7 @@ class GenderSystem : public System<GenderSystem>{
         }
 
         void onTick(TickSystem::TickEvent& event){
+            (void)event;
             cout << "tick" << endl;
         }
 };
@@ -68,7 +69,7 @@ class FishSystem : public System<FishSystem>{
         void printFishes(){
             GenderSystem* genderSystem = ecs.getSystem<GenderSystem>();
 
-            size_t n = 1;
+            //size_t n = 1;
             /*for(const auto& fish : componentsMap){
                 const FishComponent& fishComponent = static_cast<const FishComponent&>(*fish.second);
                 GenderComponent* genderComponent{nullptr};

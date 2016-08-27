@@ -5,6 +5,8 @@ namespace ecs {
     template<typename>
     class ComponentManager;
 
+    class EntityComponentSystem;
+
     class ComponentManagerBase {
             template<typename> friend class ComponentManager;
         public:
@@ -12,6 +14,6 @@ namespace ecs {
             virtual ~ComponentManagerBase() = 0;
 
         private:
-            ComponentManagerBase();
+            ComponentManagerBase(EntityComponentSystem& ecs);
     };
 }

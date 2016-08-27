@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <functional>
 
-#include "EntityComponentSystem.hpp"
+#include "../EntityComponentSystem.hpp"
 
 namespace ecs {
     class Entity;

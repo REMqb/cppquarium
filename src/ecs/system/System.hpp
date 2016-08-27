@@ -1,11 +1,11 @@
 #pragma once
 
-#include "SystemBase.hpp"
-#include "EntityComponentSystem.hpp"
-
 #include <unordered_map>
 #include <memory>
 #include <functional>
+
+#include "SystemBase.hpp"
+#include "../EntityComponentSystem.hpp"
 
 namespace ecs {
 

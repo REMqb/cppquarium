@@ -1,7 +1,7 @@
 #include "EntityComponentSystem.hpp"
 
 #include "Entity.hpp"
-#include "SystemBase.hpp"
+#include "system/SystemBase.hpp"
 
 using std::make_unique;
 using ecs::EntityComponentSystem;
@@ -15,6 +15,14 @@ Entity& EntityComponentSystem::createEntity(){
     entities.push_back(make_unique<Entity>(*this));
 
     return *entities.back();
+}
+
+void EntityComponentSystem::autoRegisterComponentManager(ComponentManagerBase& componentManager){
+    componentManagers.emplace_back(componentManager);
+}
+
+void EntityComponentSystem::autoRegisterEventListenerManager(EventListenerManagerBase& eventListenerManager){
+    eventListenerManagers.emplace_back(eventListenerManager);
 }
 
 EntityComponentSystem::~EntityComponentSystem(){

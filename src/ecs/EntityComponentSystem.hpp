@@ -12,11 +12,11 @@
 #include <utility>
 
 
-#include "EventListenerManagerBase.hpp"
-#include "EventListenerManager.hpp"
+#include "event/EventListenerManagerBase.hpp"
+#include "event/EventListenerManager.hpp"
 
-#include "ComponentManagerBase.hpp"
-#include "ComponentManager.hpp"
+#include "component/ComponentManagerBase.hpp"
+#include "component/ComponentManager.hpp"
 
 namespace ecs {
 
@@ -30,6 +30,8 @@ class Entity;
  * @brief The EntityComponentSystem class manage own entities and systems.
  */
 class EntityComponentSystem final {
+        friend ComponentManagerBase;
+        friend EventListenerManagerBase;
     public:
         EntityComponentSystem();
 
@@ -68,12 +70,17 @@ class EntityComponentSystem final {
          */
         template<typename AliasType> void registerSystemAlias(SystemBase& system);
 
+        void autoRegisterComponentManager(ComponentManagerBase& componentManager);
+        void autoRegisterEventListenerManager(EventListenerManagerBase& eventListenerManager);
+
         /// map typeid to a system of the systems vector.
         std::unordered_map<std::type_index, std::reference_wrapper<SystemBase>> typeToSystemMap;
         /// map event typeid to the corresponding listener manager.
-        std::unordered_map<std::type_index, std::unique_ptr<EventListenerManagerBase>> eventListenerManagersMap;
+        //std::unordered_map<std::type_index, std::unique_ptr<EventListenerManagerBase>> eventListenerManagersMap;
+        std::vector<std::reference_wrapper<EventListenerManagerBase>> eventListenerManagers;
         ///
-        std::unordered_map<std::type_index, std::unique_ptr<ComponentManagerBase>> componentManagersMap;
+        //std::unordered_map<std::type_index, std::unique_ptr<ComponentManagerBase>> componentManagersMap;
+        std::vector<std::reference_wrapper<ComponentManagerBase>> componentManagers;
         /// vector holding systems
         std::vector<std::unique_ptr<SystemBase>> systems;
         /// vector holding entities, may be changed to another container type later.
@@ -139,7 +146,7 @@ template<typename EventT>
 void EntityComponentSystem::addListener(typename EventT::SourceT* source, std::function<void(EventT&)> listener){
     static_assert(std::is_base_of<Event<typename EventT::SourceT>, EventT>::value, "Event type must derive from Event"); // is it that nececary ?
 
-    auto result = eventListenerManagersMap.find(typeid(EventT));
+    /*auto result = eventListenerManagersMap.find(typeid(EventT));
 
     EventListenerManager<EventT, typename EventT::SourceT>* manager = nullptr;
 
@@ -153,12 +160,14 @@ void EntityComponentSystem::addListener(typename EventT::SourceT* source, std::f
         manager = static_cast<decltype(manager)>(result->second.get());
     }
 
-    manager->addListener(source, listener);
+    manager->addListener(source, listener);*/
+
+    EventListenerManager<EventT, typename EventT::SourceT>::getEventListenerManagerFor(*this).addListener(source, listener);
 }
 
 template<typename EventT>
 void EntityComponentSystem::fireEvent(EventT& event){
-    auto result = eventListenerManagersMap.find(typeid(EventT));
+    /*auto result = eventListenerManagersMap.find(typeid(EventT));
 
     EventListenerManager<EventT, typename EventT::SourceT>* manager = nullptr;
 
@@ -166,7 +175,9 @@ void EntityComponentSystem::fireEvent(EventT& event){
         manager = static_cast<decltype(manager)>(result->second.get());
 
         manager->dispatchEvent(event);
-    }
+    }*/
+
+    EventListenerManager<EventT, typename EventT::SourceT>::getEventListenerManagerFor(*this).dispatchEvent(event);
 }
 
 template<typename ComponentT, typename... Args>

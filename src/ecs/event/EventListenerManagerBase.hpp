@@ -2,6 +2,10 @@
 
 namespace ecs {
 
+    template<typename, typename>
+    class EventListenerManager;
+
+    class EntityComponentSystem;
 
     class EventListenerManagerBase {
             template<typename, typename> friend class EventListenerManager;
@@ -10,6 +14,6 @@ namespace ecs {
             virtual ~EventListenerManagerBase() = 0;
 
         private:
-            EventListenerManagerBase();
+            EventListenerManagerBase(EntityComponentSystem& ecs);
     };
 }

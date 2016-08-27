@@ -1,7 +1,7 @@
 #include "SystemBase.hpp"
 
-#include "Component.hpp"
-#include "Entity.hpp"
+#include "../component/Component.hpp"
+#include "../Entity.hpp"
 
 using ecs::SystemBase;
 using ecs::EntityComponentSystem;
