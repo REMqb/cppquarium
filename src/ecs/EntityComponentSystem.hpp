@@ -7,7 +7,6 @@
 #include <vector>
 //#include <type_traits>
 #include <cassert>
-#include <boost/any.hpp>
 
 #include <utility>
 
