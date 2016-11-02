@@ -1,4 +1,4 @@
-project(cppquarium.html)
+project(cppquarium)
 cmake_minimum_required(VERSION 3.1)
 
 # set compiler / linker conf
