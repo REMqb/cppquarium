@@ -61,13 +61,21 @@ class GenderSystem : public System<GenderSystem>{
 };
 
 class FishSystem : public System<FishSystem>{
+    private:
+        std::unordered_map<reference_wrapper<Entity>, std::tuple<reference_wrapper<FishComponent>, GenderComponent*>> fishes;
+
     public:
 
-        FishSystem(EntityComponentSystem& ecs):System(ecs){
+        FishSystem(EntityComponentSystem& ecs): System(ecs), fishes{}{
+            ecs.addListener<EntityComponentSystem::ComponentAttachedEvent<FishComponent>>(std::bind(&FishSystem::onFishComponentAdded, this, std::placeholders::_1));
+        }
+
+        void onFishComponentAdded(EntityComponentSystem::ComponentAttachedEvent<FishComponent>& event){
+            fishes.emplace(std::piecewise_construct, std::forward_as_tuple(event.getAttachedOn()), std::forward_as_tuple(event.getAttachedComponent(), nullptr));
         }
 
         void printFishes(){
-            GenderSystem* genderSystem = ecs.getSystem<GenderSystem>();
+            //GenderSystem* genderSystem = ecs.getSystem<GenderSystem>();
 
             //size_t n = 1;
             /*for(const auto& fish : componentsMap){
@@ -114,8 +122,6 @@ Aquarium::Aquarium() {
     fishSystem = &ecs.registerSystem<FishSystem>();
     genderSystem = &ecs.registerSystem<GenderSystem>();
     seaweedSystem = &ecs.registerSystem<SeaweedSystem>();
-
-
 
     cout << "[Done]" << endl;
 }

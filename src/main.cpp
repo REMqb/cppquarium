@@ -8,7 +8,7 @@ int main(int argc, char *argv[]){
     (void)argc, (void)argv;
 
     cout << "==================" << endl
-         << "== Cppquarium   ==" << endl
+         << "==  Cppquarium  ==" << endl
          << "==================" << endl << endl;
 
     Aquarium aquarium;
@@ -18,3 +18,5 @@ int main(int argc, char *argv[]){
 
     return 0;
 }
+
+

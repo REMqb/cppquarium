@@ -11,7 +11,7 @@
 
 #include <utility>
 
-
+#include "event/Event.hpp"
 #include "event/EventListenerManagerBase.hpp"
 #include "event/EventListenerManager.hpp"
 
@@ -56,12 +56,36 @@ class EntityComponentSystem final {
         void addListener(typename EventT::SourceT* source, std::function<void(EventT&)> listener);
 
         template<typename EventT>
+        void addListener(std::function<void(EventT&)> listener);
+
+        template<typename EventT>
         void fireEvent(EventT& event);
 
         template<typename ComponentT, typename... Args>
         ComponentT& attachComponentTo(Entity& entity, Args&&... args);
 
         ~EntityComponentSystem(); // we must define the destructor, otherwise the compiler can't create the default deleter for unique_ptr because System and Entity are forward declared (incomplete)
+
+        class EntityCreatedEvent : public Event<EntityComponentSystem> {
+            public:
+                EntityCreatedEvent(EntityComponentSystem& source, Entity& createdEntity);
+
+            private:
+                Entity& createdEntity;
+        };
+
+        template<typename ComponentT>
+        class ComponentAttachedEvent : public Event<EntityComponentSystem> {
+            public:
+                ComponentAttachedEvent(EntityComponentSystem& source, Entity& attachedOn, ComponentT& attachedComponent);
+
+                Entity& getAttachedOn();
+                ComponentT& getAttachedComponent();
+
+            private:
+                Entity& attachedOn;
+                ComponentT& attachedComponent;
+        };
 
     private:
 
@@ -166,6 +190,11 @@ void EntityComponentSystem::addListener(typename EventT::SourceT* source, std::f
 }
 
 template<typename EventT>
+void EntityComponentSystem::addListener(std::function<void(EventT&)> listener){
+    addListener(this, listener);
+}
+
+template<typename EventT>
 void EntityComponentSystem::fireEvent(EventT& event){
     /*auto result = eventListenerManagersMap.find(typeid(EventT));
 
@@ -196,7 +225,26 @@ ComponentT& EntityComponentSystem::attachComponentTo(Entity& entity, Args&&... a
         manager = static_cast<decltype(manager)>(result->second.get());
     }*/
 
-    return ComponentManager<ComponentT>::getComponentManagerFor(*this).attachComponentTo(entity, std::forward<Args>(args)...);
+    auto& attachedComponent = ComponentManager<ComponentT>::getComponentManagerFor(*this).attachComponentTo(entity, std::forward<Args>(args)...);
+    ComponentAttachedEvent<ComponentT> event{*this, entity, attachedComponent};
+
+    fireEvent(event);
+
+    return attachedComponent;
+}
+
+template<typename ComponentT>
+EntityComponentSystem::ComponentAttachedEvent<ComponentT>::ComponentAttachedEvent(EntityComponentSystem& source, Entity& attachedOn, ComponentT& attachedComponent) : Event<EntityComponentSystem>(source), attachedOn(attachedOn), attachedComponent(attachedComponent){
+}
+
+template<typename ComponentT>
+Entity& EntityComponentSystem::ComponentAttachedEvent<ComponentT>::getAttachedOn(){
+    return attachedOn;
+}
+
+template<typename ComponentT>
+ComponentT& EntityComponentSystem::ComponentAttachedEvent<ComponentT>::getAttachedComponent(){
+    return attachedComponent;
 }
 
 template <typename T>
@@ -211,10 +259,14 @@ bool operator==(const std::reference_wrapper<T>& ref1, const std::reference_wrap
 }
 
 namespace std {
-template<>
-class hash<std::reference_wrapper<ecs::EntityComponentSystem>> {
-public:
-    size_t operator()(const std::reference_wrapper<ecs::EntityComponentSystem> &s) const noexcept;
-};
+    template<>
+    struct hash<std::reference_wrapper<ecs::EntityComponentSystem>> {
+        size_t operator()(const std::reference_wrapper<ecs::EntityComponentSystem> &s) const noexcept;
+    };
+
+    template<>
+    struct hash<std::reference_wrapper<ecs::Entity>> {
+        size_t operator()(const std::reference_wrapper<ecs::Entity> &s) const noexcept;
+    };
 }
 

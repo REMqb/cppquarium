@@ -14,7 +14,13 @@ EntityComponentSystem::EntityComponentSystem(){
 Entity& EntityComponentSystem::createEntity(){
     entities.push_back(make_unique<Entity>(*this));
 
-    return *entities.back();
+    Entity& createdEntity = *entities.back();
+
+    EntityCreatedEvent event{*this, createdEntity};
+
+    fireEvent(event);
+
+    return createdEntity;
 }
 
 void EntityComponentSystem::autoRegisterComponentManager(ComponentManagerBase& componentManager){
@@ -28,6 +34,9 @@ void EntityComponentSystem::autoRegisterEventListenerManager(EventListenerManage
 EntityComponentSystem::~EntityComponentSystem(){
 }
 
+EntityComponentSystem::EntityCreatedEvent::EntityCreatedEvent(EntityComponentSystem& source, Entity& createdEntity) : Event<EntityComponentSystem>(source), createdEntity(createdEntity){
+}
+
 /*using hash = std::hash<std::reference_wrapper<const EntityComponentSystem>>;
 
 template<>
@@ -39,5 +48,9 @@ namespace std {
 //template<>
     size_t hash<std::reference_wrapper<EntityComponentSystem>>::operator()(const std::reference_wrapper<EntityComponentSystem> &s) const noexcept{
         return std::hash<EntityComponentSystem*>()(&s.get());
+    }
+
+    size_t hash<std::reference_wrapper<Entity>>::operator()(const std::reference_wrapper<Entity> &s) const noexcept{
+        return std::hash<Entity*>()(&s.get());
     }
 }
