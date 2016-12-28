@@ -6,6 +6,6 @@ set (CMAKE_CXX_STANDARD 14)
 
 file(GLOB_RECURSE SRC_LIST src/*.*pp)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpedantic -Wall -Wextra -fvisibility=hidden -fvisibility-inlines-hidden")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpedantic -Wall -Wextra -fvisibility=hidden -fvisibility-inlines-hidden -std=c++1z")
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
